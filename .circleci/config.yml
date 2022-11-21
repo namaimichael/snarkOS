@@ -7,16 +7,14 @@ jobs:
       DOCKER_BUILDKIT: 1
       BUILDX_PLATFORMS: 'linux/arm64/v8,linux/amd64'
       IMAGE_NAME: namaimichael/snarkos
-    docker:
-      - image: docker:dind
     steps:
       - checkout
-      - setup_remote_docker:
-          version: 18.09.3
+#       - setup_remote_docker:
+#           version: 18.09.3
       - run: docker version
-#       - run: sudo apt-get update \
-#              && sudo apt-get install -y curl \
-#              && sudo rm -rf /var/lib/apt/lists/*
+      - run: sudo apt-get update \
+             && sudo apt-get install -y curl \
+             && sudo rm -rf /var/lib/apt/lists/*
       - run: mkdir -vp ~/.docker/cli-plugins/
       - run: >-
           curl --silent -L --output ~/.docker/cli-plugins/docker-buildx
@@ -37,8 +35,8 @@ jobs:
   publish-latest:
     machine:
       - image: ubuntu-2004:2022.10.1
-    docker:
-      - image: docker:dind
+#     docker:
+#       - image: docker:dind
     steps:
 #       - setup_remote_docker:
 #           version: 18.09.3
