@@ -12,13 +12,11 @@ jobs:
       - setup_remote_docker:
           version: 18.09.3
       - run: docker version
-      - run: sudo apt-get update && sudo apt-get install -y curl
+#       - run: sudo apt-get update && sudo apt-get install -y curl
+      - run: apk add make curl
       - run: mkdir -vp ~/.docker/cli-plugins/
-      - run: >-
-          curl --silent -L --output ~/.docker/cli-plugins/docker-buildx
-          https://github.com/docker/buildx/releases/download/v0.3.1/buildx-v0.3.1.linux-amd64
+      - run: curl --silent -L --output ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.3.1/buildx-v0.3.1.linux-amd64
       - run: chmod a+x ~/.docker/cli-plugins/docker-buildx
-      - run: docker buildx install
       - run: docker buildx version
       - run: |
           docker buildx build \
