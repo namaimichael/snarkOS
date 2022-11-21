@@ -116,37 +116,37 @@ jobs:
   #           howardwu/snarkos-codecov:2021-03-25 bash /home/circleci/project/ci/kcov.sh
   #     - run: cd ./project/ && bash <(curl -s https://codecov.io/bash)
 
-  fmt:
-    docker:
-      - image: cimg/rust:1.63
+#   fmt:
+#     docker:
+#       - image: cimg/rust:1.63
 #     resource_class: xlarge
-    steps:
-      - checkout
-      - install_rust_nightly
-      - setup_environment:
-          cache_key: snarkos-fmt-cache
-      - run:
-          name: Check style
-          no_output_timeout: 35m
-          command: cargo +nightly fmt --all -- --check
-      - clear_environment:
-          cache_key: snarkos-fmt-cache
+#     steps:
+#       - checkout
+#       - install_rust_nightly
+#       - setup_environment:
+#           cache_key: snarkos-fmt-cache
+#       - run:
+#           name: Check style
+#           no_output_timeout: 35m
+#           command: cargo +nightly fmt --all -- --check
+#       - clear_environment:
+#           cache_key: snarkos-fmt-cache
 
-  clippy:
-    docker:
-      - image: cimg/rust:1.63
-#     resource_class: xlarge
-    steps:
-      - checkout
-      - install_rust_nightly
-      - setup_environment:
-          cache_key: snarkos-clippy-cache
-      - run:
-          name: Check style
-          no_output_timeout: 35m
-          command: cargo +nightly clippy --workspace --all-targets
-      - clear_environment:
-          cache_key: snarkos-clippy-cache
+#   clippy:
+#     docker:
+#       - image: cimg/rust:1.63
+# #     resource_class: xlarge
+#     steps:
+#       - checkout
+#       - install_rust_nightly
+#       - setup_environment:
+#           cache_key: snarkos-clippy-cache
+#       - run:
+#           name: Check style
+#           no_output_timeout: 35m
+#           command: cargo +nightly clippy --workspace --all-targets
+#       - clear_environment:
+#           cache_key: snarkos-clippy-cache
 
 
   build-and-publish-docker-arm:
