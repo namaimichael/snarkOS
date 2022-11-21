@@ -12,7 +12,7 @@ jobs:
 #       - setup_remote_docker:
 #           version: 18.09.3
       - run: docker version
-      - run: apt-get update && apt-get install -y curl \
+      - run: sudo apt-get update && sudo apt-get install -y curl \
       - run: mkdir -vp ~/.docker/cli-plugins/
       - run: >-
           curl --silent -L --output ~/.docker/cli-plugins/docker-buildx
