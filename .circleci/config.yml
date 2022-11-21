@@ -10,8 +10,8 @@ jobs:
       
     steps:
       - checkout
-      - setup_remote_docker:
-          version: 18.09.3
+#       - setup_remote_docker:
+#           version: 18.09.3
       - run: docker version
       - run: sudo apt-get update && sudo apt-get install -y curl 
       - run: mkdir -vp ~/.docker/cli-plugins/
@@ -19,6 +19,7 @@ jobs:
           curl --silent -L --output ~/.docker/cli-plugins/docker-buildx
           https://github.com/docker/buildx/releases/download/v0.3.1/buildx-v0.3.1.linux-amd64
       - run: chmod a+x ~/.docker/cli-plugins/docker-buildx
+      - run: docker buildx install
       - run: docker buildx version
       - run: |
           docker buildx build \
@@ -36,9 +37,9 @@ jobs:
       image: ubuntu-2004:2022.10.1
 #     docker:
 #       - image: docker:dind
-    steps:
-      - setup_remote_docker:
-          version: 18.09.3
+#     steps:
+#       - setup_remote_docker:
+#           version: 18.09.3
       - run: docker version
       - attach_workspace:
           at: /tmp/workspace
