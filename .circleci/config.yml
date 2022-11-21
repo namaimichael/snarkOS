@@ -293,7 +293,7 @@ jobs:
 workflows:
   main-workflow:
     jobs:
-      - environment
+#       - environment
       - snarkos
       - fmt
       - clippy
