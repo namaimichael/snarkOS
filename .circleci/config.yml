@@ -1,20 +1,54 @@
 version: 2.1
-executors:
-  docker-publisher:
-    environment:
-      IMAGE_NAME: namaimichael/snarkos
-    docker:
-      - image: circleci/buildpack-deps:stretch
 jobs:
   build:
-    executor: docker-publisher
+    machine:
+      image: ubuntu:22.04 # we want a new Docker
+    environment:
+      DOCKER_BUILDKIT: 1
+      BUILDX_PLATFORMS: linux/amd64,linux/arm64,linux/ppc64le,linux/s390x,linux/386,linux/arm/v7,linux/arm/v6
+      IMAGE_NAME: namaimichael/snarkos
+
+
+# version: 2.1
+# executors:
+#   docker-publisher:
+#     environment:
+      
+#       DOCKER_BUILDKIT: 1
+#       BUILDX_PLATFORMS: linux/amd64,linux/arm64
+#     docker:
+#       - image: circleci/buildpack-deps:stretch
+# jobs:
+#   build:
+#     executor: docker-publisher
     steps:
       - checkout
       - setup_remote_docker
       - run:
           name: Build Docker image
           command: |
-            docker build -t $IMAGE_NAME:latest --platform=linux/amd64,linux/arm64 .
+            docker build -t $IMAGE_NAME:latest
+      - run:
+          name: Install buildx
+          command: |
+            BUILDX_BINARY_URL="https://github.com/docker/buildx/releases/download/v0.4.2/buildx-v0.4.2.linux-amd64"
+
+            curl --output docker-buildx \
+              --silent --show-error --location --fail --retry 3 \
+              "$BUILDX_BINARY_URL"
+
+            mkdir -p ~/.docker/cli-plugins
+
+            mv docker-buildx ~/.docker/cli-plugins/
+            chmod a+x ~/.docker/cli-plugins/docker-buildx
+
+            docker buildx install
+            # Run binfmt
+            docker run --rm --privileged tonistiigi/binfmt:latest --install "$BUILDX_PLATFORMS"
+      - run:
+          name: Tag Cros-build
+          command: |
+            BUILDX_PLATFORMS="$BUILDX_PLATFORMS" make cross-build
       - run:
           name: Archive Docker image
           command: docker save -o image.tar $IMAGE_NAME
@@ -22,6 +56,7 @@ jobs:
           root: .
           paths:
             - ./image.tar
+            
   publish-latest:
     executor: docker-publisher
     steps:
