@@ -1,319 +1,52 @@
 version: 2.1
-
-orbs:
-  windows: circleci/windows@2.4.0
-
-commands:
-  check_windows:
-    description: "Runs cargo check on Windows"
-    parameters:
-      workspace_member:
-        type: string
+executors:
+  docker-publisher:
+    environment:
+      IMAGE_NAME: namaimichael/snarkos
+    docker:
+      - image: circleci/buildpack-deps:stretch
+jobs:
+  build:
+    executor: docker-publisher
     steps:
       - checkout
-      - restore_cache:
-          key: cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
-      - run:
-          name: "Install Rust and run cargo check"
-          command: |
-            $ProgressPreference = "SilentlyContinue"
-            Invoke-WebRequest -Uri "https://win.rustup.rs/" -OutFile "C:\rustup-init.exe"
-            & C:\rustup-init.exe -y --default-toolchain "stable-x86_64-pc-windows-msvc" --no-modify-path --profile minimal
-            $env:Path += ";C:\Users\circleci\.cargo\bin"
-            rustc -Vv
-            cargo --version
-            rustc --version | Out-File -FilePath "rust-version"
-            if (!(Test-Path "Cargo.lock" -PathType Leaf)) {
-                cargo generate-lockfile
-            }
-            cd << parameters.workspace_member >>
-            cargo check --examples --benches --tests
-      - save_cache:
-          paths:
-            - C:\Users\circleci\.cargo\registry
-            - C:\Users\circleci\.cargo\git
-            - target
-          key: cargo-cache-{{ arch }}-{{ checksum "rust-version" }}-{{ checksum "Cargo.lock" }}
-
-  setup_environment:
-    description: "Setup testing environment"
-    parameters:
-      cache_key:
-        type: string
-        default: snarkos-stable-cache
-    steps:
-      - run: set -e
       - setup_remote_docker
       - run:
-          name: Prepare environment and install dependencies
+          name: Build Docker image
           command: |
-            export SCCACHE_CACHE_SIZE=200M
-            export WORK_DIR="$CIRCLE_WORKING_DIRECTORY/.cache/sccache"
-            export SCCACHE_DIR="$CIRCLE_WORKING_DIRECTORY/.cache/sccache"
-            mkdir -p "$CIRCLE_WORKING_DIRECTORY/.bin"
-            wget https://github.com/mozilla/sccache/releases/download/v0.3.0/sccache-v0.3.0-x86_64-unknown-linux-musl.tar.gz
-            tar -C "$CIRCLE_WORKING_DIRECTORY/.bin" -xvf sccache-v0.3.0-x86_64-unknown-linux-musl.tar.gz
-            mv $CIRCLE_WORKING_DIRECTORY/.bin/sccache-v0.3.0-x86_64-unknown-linux-musl/sccache $CIRCLE_WORKING_DIRECTORY/.bin/sccache
-            export PATH="$PATH:$CIRCLE_WORKING_DIRECTORY/.bin"
-            export RUSTC_WRAPPER="sccache"
-            rm -rf "$CIRCLE_WORKING_DIRECTORY/.cargo/registry"
-            DEBIAN_FRONTEND=noninteractive sudo apt-get update
-            DEBIAN_FRONTEND=noninteractive sudo apt-get dist-upgrade -y -o DPkg::Options::=--force-confold
-            DEBIAN_FRONTEND=noninteractive sudo apt-get install -y --no-install-recommends clang llvm-dev llvm pkg-config xz-utils make libssl-dev libssl-dev
-      - restore_cache:
-          keys:
-            - << parameters.cache_key >>
-
-  clear_environment:
-    description: "Clear environment"
-    parameters:
-      cache_key:
-        type: string
-        default: snarkos-stable-cache
-    steps:
-      - run: (sccache -s||true)
-      - run: set +e
-      - save_cache:
-          key: << parameters.cache_key >>
+            docker build -t $IMAGE_NAME:latest .
+      - run:
+          name: Archive Docker image
+          command: docker save -o image.tar $IMAGE_NAME
+      - persist_to_workspace:
+          root: .
           paths:
-            - .cache/sccache
-            - .cargo
-
-  run_serial:
-    description: "Build and run tests"
-    parameters:
-      workspace_member:
-        type: string
-      cache_key:
-        type: string
-      flags:
-        type: string
-        default: ""
+            - ./image.tar
+  publish-latest:
+    executor: docker-publisher
     steps:
-      - checkout
-      - setup_environment:
-          cache_key: << parameters.cache_key >>
+      - attach_workspace:
+          at: /tmp/workspace
+      - setup_remote_docker
       - run:
-          no_output_timeout: 30m
-          command: cd << parameters.workspace_member >> && RUST_MIN_STACK=67108864 cargo test << parameters.flags >>
-      - clear_environment:
-          cache_key: << parameters.cache_key >>
-
-  run_parallel:
-    description: "Build and run tests (in parallel)"
-    parameters:
-      workspace_member:
-        type: string
-      cache_key:
-        type: string
-      flags:
-        type: string
-        default: ""
-    steps:
-      - checkout
-      - setup_environment:
-          cache_key: << parameters.cache_key >>
+          name: Load archived Docker image
+          command: docker load -i /tmp/workspace/image.tar
       - run:
-          no_output_timeout: 45m
+          name: Publish Docker Image to Docker Hub
           command: |
-            cd << parameters.workspace_member >>
-            cargo test -- --list --format terse | sed 's/: test//' > test_names.txt
-            TEST_NAMES=$(circleci tests split test_names.txt)
-            for i in $(echo $TEST_NAMES | sed "s/ / /g")
-            do
-                RUST_MIN_STACK=67108864 cargo test $i << parameters.flags >>
-            done
-      - clear_environment:
-          cache_key: << parameters.cache_key >>
-
-  install_rust_nightly:
-    description: "Install Rust nightly toolchain"
-    steps:
-      - run: rustup toolchain install nightly-x86_64-unknown-linux-gnu
-
-jobs:
-  snarkos:
-    docker:
-      - image: cimg/rust:1.64
-    resource_class: xlarge
-    steps:
-      - run_serial:
-          workspace_member: .
-          cache_key: snarkos-stable-cache
-
-  account:
-    docker:
-      - image: cimg/rust:1.64
-    resource_class: xlarge
-    steps:
-      - run_serial:
-          workspace_member: account
-          cache_key: snarkos-account-cache
-
-  cli:
-    docker:
-      - image: cimg/rust:1.64
-    resource_class: xlarge
-    steps:
-      - run_serial:
-          workspace_member: cli
-          cache_key: snarkos-cli-cache
-
-  display:
-    docker:
-      - image: cimg/rust:1.64
-    resource_class: xlarge
-    steps:
-      - run_serial:
-          workspace_member: display
-          cache_key: snarkos-display-cache
-
-  node:
-    docker:
-      - image: cimg/rust:1.64
-    resource_class: xlarge
-    steps:
-      - run_serial:
-          workspace_member: node
-          cache_key: snarkos-node-cache
-
-  node-consensus:
-    docker:
-      - image: cimg/rust:1.64
-    resource_class: 2xlarge
-    steps:
-      - run_serial:
-          workspace_member: node/consensus
-          cache_key: snarkos-node-consensus-cache
-
-  node-executor:
-    docker:
-      - image: cimg/rust:1.64
-    resource_class: xlarge
-    steps:
-      - run_serial:
-          workspace_member: node/executor
-          cache_key: snarkos-node-executor-cache
-
-  node-ledger:
-    docker:
-      - image: cimg/rust:1.64
-    resource_class: 2xlarge
-    steps:
-      - run_serial:
-          workspace_member: node/ledger
-          cache_key: snarkos-node-ledger-cache
-
-  node-messages:
-    docker:
-      - image: cimg/rust:1.64
-    resource_class: xlarge
-    steps:
-      - run_serial:
-          workspace_member: node/messages
-          cache_key: snarkos-node-messages-cache
-
-  node-rest:
-    docker:
-      - image: cimg/rust:1.64
-    resource_class: xlarge
-    steps:
-      - run_serial:
-          workspace_member: node/rest
-          cache_key: snarkos-node-rest-cache
-
-  node-router:
-    docker:
-      - image: cimg/rust:1.64
-    resource_class: xlarge
-    steps:
-      - run_serial:
-          workspace_member: node/router
-          cache_key: snarkos-node-router-cache
-
-  node-store:
-    docker:
-      - image: cimg/rust:1.64
-    resource_class: xlarge
-    steps:
-      - run_serial:
-          workspace_member: node/store
-          cache_key: snarkos-node-store-cache
-
-  check-fmt:
-    docker:
-      - image: cimg/rust:1.64
-    resource_class: xlarge
-    steps:
-      - checkout
-      - install_rust_nightly
-      - setup_environment:
-          cache_key: snarkos-fmt-cache
-      - run:
-          name: Check style
-          no_output_timeout: 35m
-          command: cargo +nightly fmt --all -- --check
-      - clear_environment:
-          cache_key: snarkos-fmt-cache
-
-  check-clippy:
-    docker:
-      - image: cimg/rust:1.64
-    resource_class: 2xlarge
-    steps:
-      - checkout
-      - setup_environment:
-          cache_key: snarkos-clippy-cache
-      - run:
-          name: Check lint
-          no_output_timeout: 35m
-          command: |
-            cargo clippy --workspace --all-targets -- -D warnings
-            cargo clippy --workspace --all-targets --all-features -- -D warnings
-      - clear_environment:
-          cache_key: snarkos-clippy-cache
-
-  verify-windows:
-    executor:
-      name: windows/default
-      size: 2xlarge
-    environment:
-      CARGO_NET_GIT_FETCH_WITH_CLI: "true"
-    parameters:
-      workspace_member:
-        type: string
-    steps:
-      - check_windows:
-          workspace_member: << parameters.workspace_member >>
-
+            echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USER" --password-stdin
+            docker push $IMAGE_NAME:latest
 workflows:
   version: 2
-
-  main-workflow:
+  build-master:
     jobs:
-      - snarkos
-      - account
-      - cli
-      - display
-      - node
-      - node-consensus
-      - node-executor
-      - node-ledger
-      - node-messages
-      - node-rest
-      - node-router
-      - node-store
-      - check-fmt
-      - check-clippy
-
-  windows-workflow:
-    jobs:
-      - verify-windows:
-          matrix:
-            parameters:
-              workspace_member: [
-                account,
-#                cli,
-#                display
-#                node
-              ]
+      - build:
+          filters:
+            branches:
+              only: testnet3
+      - publish-latest:
+          requires:
+            - build
+          filters:
+            branches:
+              only: testnet3
