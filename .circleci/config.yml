@@ -1,50 +1,22 @@
-version: 2.1
+version: 2
 jobs:
   build:
-    machine:
-      image: ubuntu:22.04 # we want a new Docker
-    environment:
-      DOCKER_BUILDKIT: 1
-      BUILDX_PLATFORMS: linux/amd64,linux/arm64,linux/ppc64le,linux/s390x,linux/386,linux/arm/v7,linux/arm/v6
-      IMAGE_NAME: namaimichael/snarkos
-
-
-# version: 2.1
-# executors:
-#   docker-publisher:
-#     environment:
-      
-#       DOCKER_BUILDKIT: 1
-#       BUILDX_PLATFORMS: linux/amd64,linux/arm64
-#     docker:
-#       - image: circleci/buildpack-deps:stretch
-# jobs:
-#   build:
-#     executor: docker-publisher
+    docker:
+      - image: docker:stable
     steps:
       - checkout
-      - setup_remote_docker
-      - run:
-          name: Build Docker image
-          command: |
-            docker build -t $IMAGE_NAME:latest
-      - run:
-          name: Install buildx
-          command: |
-            BUILDX_BINARY_URL="https://github.com/docker/buildx/releases/download/v0.4.2/buildx-v0.4.2.linux-amd64"
-
-            curl --output docker-buildx \
-              --silent --show-error --location --fail --retry 3 \
-              "$BUILDX_BINARY_URL"
-
-            mkdir -p ~/.docker/cli-plugins
-
-            mv docker-buildx ~/.docker/cli-plugins/
-            chmod a+x ~/.docker/cli-plugins/docker-buildx
-
-            docker buildx install
-            # Run binfmt
-            docker run --rm --privileged tonistiigi/binfmt:latest --install "$BUILDX_PLATFORMS"
+      - setup_remote_docker:
+          version: 18.09.3
+      - run: docker version
+      - run: apk add make curl
+      - run: mkdir -vp ~/.docker/cli-plugins/
+      - run: curl --silent -L --output ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.3.1/buildx-v0.3.1.linux-amd64
+      - run: chmod a+x ~/.docker/cli-plugins/docker-buildx
+      - run: docker buildx version
+      - run: |
+        docker buildx build \
+          --platform linux/arm/v7,linux/arm64/v8,linux/amd64 \
+          --tag namaimichael/snarkos:testnet3-latest 
       - run:
           name: Tag Cros-build
           command: |
@@ -58,22 +30,25 @@ jobs:
             - ./image.tar
             
   publish-latest:
-    jobs:
-      build:
-        machine:
-          image: ubuntu:22.04 # we want a new Docker
-        steps:
-          - attach_workspace:
-              at: /tmp/workspace
-          - setup_remote_docker
-          - run:
-              name: Load archived Docker image
-              command: docker load -i /tmp/workspace/image.tar
-          - run:
-              name: Publish Docker Image to Docker Hub
-              command: |
-                echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USER" --password-stdin
-                docker push $IMAGE_NAME:latest
+    docker:
+      - image: docker:stable
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - setup_remote_docker:
+          version: 18.09.3
+      - run:
+          name: Load archived Docker image
+          command: docker load -i /tmp/workspace/image.tar
+      - run:
+          name: Publish Docker Image to Docker Hub
+          command: |
+            echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USER" --password-stdin
+            docker push $IMAGE_NAME:latest
+      - run: |
+        docker buildx build --push \
+          --platform linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/i386,linux/amd64 
+          --tag your-username/multiarch-example:buildx-latest .
 workflows:
   version: 2
   build-master:
