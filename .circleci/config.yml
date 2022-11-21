@@ -1,8 +1,8 @@
 version: 2
 jobs:
   build:
-    docker:
-      - image: 'docker:stable'
+    machine:
+      - image: ubuntu-2004:2022.10.1
     environment:
       DOCKER_BUILDKIT: 1
       BUILDX_PLATFORMS: 'linux/arm64/v8,linux/amd64'
@@ -32,7 +32,7 @@ jobs:
             - ./image.tar
   publish-latest:
     docker:
-      - image: 'docker:stable'
+      - image: ubuntu-2004:2022.10.1
     steps:
       - setup_remote_docker:
           version: 18.09.3
