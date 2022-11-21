@@ -9,8 +9,8 @@ jobs:
       IMAGE_NAME: namaimichael/snarkos
     steps:
       - checkout
-      - setup_remote_docker:
-          version: 18.09.3
+#       - setup_remote_docker:
+#           version: 18.09.3
       - run: docker version
       - run: apk add make curl
       - run: mkdir -vp ~/.docker/cli-plugins/
@@ -34,8 +34,8 @@ jobs:
     docker:
       - image: ubuntu-2004:2022.10.1
     steps:
-      - setup_remote_docker:
-          version: 18.09.3
+#       - setup_remote_docker:
+#           version: 18.09.3
       - attach_workspace:
           at: /tmp/workspace
       - run:
