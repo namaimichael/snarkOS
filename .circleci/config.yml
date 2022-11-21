@@ -3,11 +3,11 @@ jobs:
   build:
     machine:
       image: ubuntu-2004:2022.10.1
-    steps:
     environment:
       DOCKER_BUILDKIT: 1
       BUILDX_PLATFORMS: 'linux/arm64/v8,linux/amd64'
       IMAGE_NAME: namaimichael/snarkos
+      
     steps:
       - checkout
 #       - setup_remote_docker:
