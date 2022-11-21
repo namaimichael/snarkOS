@@ -21,7 +21,7 @@ jobs:
       - run: docker buildx version
       - run: |
           docker buildx build \
-            --platform linux/arm64/v8,linux/amd64 \
+            --platform $BUILDX_PLATFORMS \
             --tag $IMAGE_NAME:testnet3-latest .
       - run:
           name: Archive Docker image
@@ -48,8 +48,8 @@ jobs:
             --password-stdin 
       - run: |
           docker buildx build --push \
-            --platform linux/arm64/v8,linux/amd64 \
-            --tag your-username/multiarch-example:buildx-latest .
+            --platform $BUILDX_PLATFORMS \
+            --tag $IMAGE_NAME:testnet3-latest .
 workflows:
   version: 2
   build-master:
