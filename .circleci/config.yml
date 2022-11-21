@@ -61,29 +61,29 @@ commands:
           paths:
             - .cache/sccache
             - .cargo
-  run_parallel:
-    description: Build and run tests (in parallel)
-    parameters:
-      workspace_member:
-        type: string
-      features:
-        type: string
-    steps:
-      - run:
-          no_output_timeout: 30m
-          command: >
-            cd << parameters.workspace_member >>
+#   run_parallel:
+#     description: Build and run tests (in parallel)
+#     parameters:
+#       workspace_member:
+#         type: string
+#       features:
+#         type: string
+#     steps:
+#       - run:
+#           no_output_timeout: 30m
+#           command: >
+#             cd << parameters.workspace_member >>
 
-            cargo test --features=<< parameters.features >> -- --list --format
-            terse | sed 's/: test//' > test_names.txt
+#             cargo test --features=<< parameters.features >> -- --list --format
+#             terse | sed 's/: test//' > test_names.txt
 
-            TEST_NAMES=$(circleci tests split test_names.txt)
+#             TEST_NAMES=$(circleci tests split test_names.txt)
 
-            for i in $(echo $TEST_NAMES | sed "s/ / /g")
+#             for i in $(echo $TEST_NAMES | sed "s/ / /g")
 
-            do
-                RUST_MIN_STACK=8388608 cargo test --features=<< parameters.features >> $i
-            done
+#             do
+#                 RUST_MIN_STACK=8388608 cargo test --features=<< parameters.features >> $i
+#             done
   install_rust_nightly:
     description: Install Rust nightly toolchain
     steps:
