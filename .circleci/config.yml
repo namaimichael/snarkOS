@@ -1,16 +1,16 @@
 version: 2
 jobs:
   build:
-    machine:
-      - image: ubuntu-2004:2022.10.1
+    docker:
+      - image: cimg/ubuntu:22.04
     environment:
       DOCKER_BUILDKIT: 1
       BUILDX_PLATFORMS: 'linux/arm64/v8,linux/amd64'
       IMAGE_NAME: namaimichael/snarkos
     steps:
       - checkout
-#       - setup_remote_docker:
-#           version: 18.09.3
+      - setup_remote_docker:
+          version: 18.09.3
       - run: docker version
       - run: set -eux ; \
              apt-get update -y && \
@@ -34,13 +34,14 @@ jobs:
           paths:
             - ./image.tar
   publish-latest:
-    machine:
-      - image: ubuntu-2004:2022.10.1
+    docker:
+      - image: cimg/ubuntu:22.04
 #     docker:
 #       - image: docker:dind
     steps:
-#       - setup_remote_docker:
-#           version: 18.09.3
+      - setup_remote_docker:
+          version: 18.09.3
+      - run: docker version
       - attach_workspace:
           at: /tmp/workspace
       - run:
