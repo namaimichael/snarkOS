@@ -118,7 +118,7 @@ jobs:
   fmt:
     docker:
       - image: 'cimg/rust:1.63'
-#     resource_class: xlarge
+    resource_class: large
     steps:
       - checkout
       - install_rust_nightly
@@ -133,6 +133,7 @@ jobs:
   clippy:
     docker:
       - image: 'cimg/rust:1.63'
+    resource_class: large
     steps:
       - checkout
       - install_rust_nightly
@@ -228,6 +229,7 @@ jobs:
     machine:
       image: 'ubuntu-2204:current'
       docker_layer_caching: true
+    resource_class: arm.large
     steps:
       - checkout
       - attach_workspace:
