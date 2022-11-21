@@ -89,19 +89,19 @@ commands:
     steps:
       - run: rustup toolchain install nightly-x86_64-unknown-linux-gnu
 jobs:
-  environment:
-    docker:
-      - image: 'cimg/rust:1.63'
-    parallelism: 1
-    steps:
-      - checkout
-      - setup_environment:
-          cache_key: snarkos-environment-cache
-      - run_parallel:
-          workspace_member: environment
-          features: ''
-      - clear_environment:
-          cache_key: snarkos-environment-cache
+#   environment:
+#     docker:
+#       - image: 'cimg/rust:1.63'
+#     parallelism: 1
+#     steps:
+#       - checkout
+#       - setup_environment:
+#           cache_key: snarkos-environment-cache
+#       - run_parallel:
+#           workspace_member: environment
+#           features: ''
+#       - clear_environment:
+#           cache_key: snarkos-environment-cache
   snarkos:
     docker:
       - image: 'cimg/rust:1.63'
