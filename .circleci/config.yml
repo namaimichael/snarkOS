@@ -101,20 +101,20 @@ jobs:
 #           workspace_member: environment
 #           features: ''
 #       - clear_environment:
-#           cache_key: snarkos-environment-cache
-  snarkos:
-    docker:
-      - image: 'cimg/rust:1.63'
-    parallelism: 20
-    steps:
-      - checkout
-      - setup_environment:
-          cache_key: snarkos-stable-cache
-      - run_parallel:
-          workspace_member: .
-          features: ''
-      - clear_environment:
-          cache_key: snarkos-stable-cache
+# #           cache_key: snarkos-environment-cache
+#   snarkos:
+#     docker:
+#       - image: 'cimg/rust:1.63'
+#     parallelism: 20
+#     steps:
+#       - checkout
+#       - setup_environment:
+#           cache_key: snarkos-stable-cache
+# #       - run_parallel:
+# #           workspace_member: .
+# #           features: ''
+#       - clear_environment:
+#           cache_key: snarkos-stable-cache
   fmt:
     docker:
       - image: 'cimg/rust:1.63'
@@ -294,7 +294,7 @@ workflows:
   main-workflow:
     jobs:
 #       - environment
-      - snarkos
+#       - snarkos
       - fmt
       - clippy
   build-snarkos-docker-images:
