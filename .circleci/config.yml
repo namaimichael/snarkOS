@@ -265,8 +265,8 @@ workflows:
       # - codecov:
       #     requires:
       #       - rust-stable
-      - fmt
-      - clippy
+#       - fmt
+#       - clippy
   build-snarkos-docker-images:
     when:
       or:
