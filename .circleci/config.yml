@@ -9,13 +9,13 @@ jobs:
       IMAGE_NAME: namaimichael/snarkos
     steps:
       - checkout
-#       - setup_remote_docker:
-#           version: 18.09.3
+      - setup_remote_docker:
+          version: 18.09.3
       - run: docker version
       - run: set -eux ; \
              apt-get update -y && \
              apt-get dist-upgrade -y && \
-             apt-get install -y --no-install-recommends \
+             apt-get install -y curl --no-install-recommends 
       - run: mkdir -vp ~/.docker/cli-plugins/
       - run: >-
           curl --silent -L --output ~/.docker/cli-plugins/docker-buildx
@@ -39,8 +39,8 @@ jobs:
 #     docker:
 #       - image: docker:dind
     steps:
-#       - setup_remote_docker:
-#           version: 18.09.3
+      - setup_remote_docker:
+          version: 18.09.3
       - attach_workspace:
           at: /tmp/workspace
       - run:
