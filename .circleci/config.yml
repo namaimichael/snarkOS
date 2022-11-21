@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: docker:stable
+      - image: 'docker:stable'
     steps:
       - checkout
       - setup_remote_docker:
@@ -10,13 +10,15 @@ jobs:
       - run: docker version
       - run: apk add make curl
       - run: mkdir -vp ~/.docker/cli-plugins/
-      - run: curl --silent -L --output ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.3.1/buildx-v0.3.1.linux-amd64
+      - run: >-
+          curl --silent -L --output ~/.docker/cli-plugins/docker-buildx
+          https://github.com/docker/buildx/releases/download/v0.3.1/buildx-v0.3.1.linux-amd64
       - run: chmod a+x ~/.docker/cli-plugins/docker-buildx
       - run: docker buildx version
       - run: |
-        docker buildx build \
-          --platform linux/arm/v7,linux/arm64/v8,linux/amd64 \
-          --tag namaimichael/snarkos:testnet3-latest 
+          docker buildx build \
+            --platform linux/arm/v7,linux/arm64/v8,linux/amd64 \
+            --tag namaimichael/snarkos:testnet3-latest 
       - run:
           name: Tag Cros-build
           command: |
@@ -28,10 +30,9 @@ jobs:
           root: .
           paths:
             - ./image.tar
-            
   publish-latest:
     docker:
-      - image: docker:stable
+      - image: 'docker:stable'
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -42,13 +43,15 @@ jobs:
           command: docker load -i /tmp/workspace/image.tar
       - run:
           name: Publish Docker Image to Docker Hub
-          command: |
-            echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USER" --password-stdin
+          command: >
+            echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USER"
+            --password-stdin
+
             docker push $IMAGE_NAME:latest
       - run: |
-        docker buildx build --push \
-          --platform linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/i386,linux/amd64 
-          --tag your-username/multiarch-example:buildx-latest .
+          docker buildx build --push \
+            --platform linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/i386,linux/amd64 
+            --tag your-username/multiarch-example:buildx-latest .
 workflows:
   version: 2
   build-master:
