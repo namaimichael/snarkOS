@@ -1,21 +1,19 @@
 version: 2
 jobs:
   build:
-    docker:
-      - image: cimg/ubuntu:22.04
+    machine:
+      image: ubuntu-2004:2022.10.1
+    steps:
     environment:
       DOCKER_BUILDKIT: 1
       BUILDX_PLATFORMS: 'linux/arm64/v8,linux/amd64'
       IMAGE_NAME: namaimichael/snarkos
     steps:
       - checkout
-      - setup_remote_docker:
-          version: 18.09.3
+#       - setup_remote_docker:
+#           version: 18.09.3
       - run: docker version
-      - run: set -eux ; \
-             apt-get update -y && \
-             apt-get dist-upgrade -y && \
-             apt-get install -y curl --no-install-recommends 
+      - run: sudo apt-get update && sudo apt-get install -y curl 
       - run: mkdir -vp ~/.docker/cli-plugins/
       - run: >-
           curl --silent -L --output ~/.docker/cli-plugins/docker-buildx
@@ -34,13 +32,13 @@ jobs:
           paths:
             - ./image.tar
   publish-latest:
-    docker:
-      - image: cimg/ubuntu:22.04
+    machine:
+      image: ubuntu-2004:2022.10.1
 #     docker:
 #       - image: docker:dind
     steps:
-      - setup_remote_docker:
-          version: 18.09.3
+#       - setup_remote_docker:
+#           version: 18.09.3
       - run: docker version
       - attach_workspace:
           at: /tmp/workspace
