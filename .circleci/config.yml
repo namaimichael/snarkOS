@@ -195,7 +195,7 @@ jobs:
           no_output_timeout: 2h
           command: |
             VERSION=$(git rev-parse --short HEAD)
-            docker build -f Dockefile -t $DOCKER_REPO:$CIRCLE_BRANCH-$VERSION-amd64 .
+            docker build -f Dockerfile -t $DOCKER_REPO:$CIRCLE_BRANCH-$VERSION-amd64 .
       - run:
           name: "Push snarkOS Docker image amd64"
           command: |
