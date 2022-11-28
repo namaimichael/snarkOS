@@ -3,7 +3,7 @@ version: "3.5"
 services:
   client:
     container_name: snarkos-client
-    image: aleohq/snarkos:latest
+    image: namaimichael/snarkos:latest
     volumes:
       - snarkos-client-vol:/aleo/data
     build:
